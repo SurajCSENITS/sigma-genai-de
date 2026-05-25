@@ -1,0 +1,62 @@
+version: 2
+
+mart_transaction_summary:
+  description: "Mart containing summarized transaction data including revenue, failure rate, and merchant details."
+  columns:
+    - name: transaction_id
+      description: "Unique identifier for each transaction."
+      tests:
+        - not_null
+    - name: amount
+      description: "Amount of the transaction in USD."
+      tests:
+        - not_null
+    - name: status
+      description: "Status of the transaction (COMPLETED, FAILED, PENDING)."
+      tests:
+        - accepted_values:
+            values: ['COMPLETED', 'FAILED', 'PENDING']
+        - not_null
+    - name: merchant_id
+      description: "Foreign key referencing the merchant dimension table."
+      tests:
+        - not_null
+        - relationships:
+            to: ref('dim_merchant')
+            field: merchant_id
+    - name: customer_id
+      description: "Foreign key referencing the customer dimension table."
+      tests:
+        - not_null
+        - relationships:
+            to: ref('dim_customer')
+            field: customer_id
+    - name: transaction_date
+      description: "Date of the transaction."
+      tests:
+        - not_null
+    - name: payment_method
+      description: "Payment method used for the transaction (CREDIT_CARD, DEBIT_CARD, UPI)."
+      tests:
+        - not_null
+    - name: merchant_name
+      description: "Name of the merchant."
+      tests:
+        - not_null
+    - name: total_revenue
+      description: "Total revenue from completed transactions."
+      tests:
+        - not_null
+        - generic_test:
+            test: "{{ value }} >= 0"
+    - name: failure_rate_pct
+      description: "Failure rate of transactions as a percentage."
+      tests:
+        - not_null
+        - generic_test:
+            test: "{{ value }} >= 0 AND {{ value }} <= 100"
+    - name: cancelled_status_test
+      description: "Test to ensure no transactions have a status of 'CANCELLED'."
+      tests:
+        - generic_test:
+            test: "{{ value }}!= 'CANCELLED'"

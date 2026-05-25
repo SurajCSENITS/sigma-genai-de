@@ -1,0 +1,11 @@
+-- Revenue by merchant
+SELECT 
+    dm.MERCHANT_NAME,
+    dm.CATEGORY,
+    SUM(ft.AMOUNT) as total_revenue,
+    COUNT(ft.TRANSACTION_ID) as transaction_count
+FROM FACT_TRANSACTIONS ft
+INNER JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID
+WHERE ft.STATUS = 'COMPLETED'
+GROUP BY dm.MERCHANT_NAME, dm.CATEGORY
+ORDER BY total_revenue DESC

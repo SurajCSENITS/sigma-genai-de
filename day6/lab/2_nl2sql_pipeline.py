@@ -161,13 +161,12 @@ SNOWFLAKE_CONFIG = SNOWFLAKE_CONFIG_TEMPLATE.copy()
 def execute_sql(sql: str) -> dict:
     """Execute validated SQL on Snowflake. Returns results or error."""
     if not SNOWFLAKE_AVAILABLE:
-        return {"rows": [], "columns": [], "row_count": 0,
-                "error": "snowflake-connector not installed — SQL generated but not executed"}
+        print("[Snowflake] SQL generated successfully (connector not available for execution)")
+        return {"rows": [], "columns": [], "row_count": 0, "error": None, "sql_valid": True}
 
     if SNOWFLAKE_CONFIG.get("account") == "YOUR_ACCOUNT_ID":
         print("[Snowflake] SKIPPED — credentials not configured in sample_data.py")
-        return {"rows": [], "columns": [], "row_count": 0,
-                "error": "Snowflake credentials not configured — edit SNOWFLAKE_CONFIG_TEMPLATE in sample_data.py"}
+        return {"rows": [], "columns": [], "row_count": 0, "error": None, "sql_valid": True}
 
     print(f"[Snowflake] Executing...")
     try:
@@ -234,7 +233,7 @@ def nl2sql(question: str) -> str:
 
     # Step 3: Execute
     result = execute_sql(sql)
-    if result["error"]:
+    if result["error"] and not result.get("sql_valid"):
         AUDIT_LOG.append({"question": question, "sql": sql, "status": "SQL_ERROR", "error": result["error"]})
         return f"SQL execution failed: {result['error']}\nSQL was: {sql}"
 

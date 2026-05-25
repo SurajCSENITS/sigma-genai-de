@@ -16,6 +16,7 @@ with open(key_path, 'rb') as f:
 
 private_key_bytes = private_key.private_bytes(
     encoding=serialization.Encoding.DER,
+    
     format=serialization.PrivateFormat.PKCS8,
     encryption_algorithm=serialization.NoEncryption()
 )

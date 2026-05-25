@@ -6,7 +6,7 @@ Sigma Intelligence Platform | GenAI for Data Engineering
 MISSION:
   The analytics team submitted 3 queries for tomorrow's board deck.
   Last quarter, a "working" query cost Sigma DataTech $47K in wrong
-  revenue numbers. Your job: build an AI system that reviews SQL
+  revenue numbers. Your job: build an  AI system that reviews SQL
   like a senior engineer — finds bugs BEFORE they hit production.
 
 WHY THIS MATTERS (vs just pasting SQL into ChatGPT):

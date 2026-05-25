@@ -1,0 +1,148 @@
+{
+  "directory": "queries",
+  "reviewed_at": "2026-05-25T17:41:33.591601",
+  "files_reviewed": 4,
+  "total_issues": 12,
+  "files": [
+    {
+      "file": "queries/my_query.sql",
+      "reviewed_at": "2026-05-25T17:41:14.260413",
+      "issues_found": 4,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Revenue Calculation Error",
+            "line": "SUM(ft.AMOUNT) as total_revenue",
+            "problem": "The revenue calculation does not filter by status 'COMPLETED' as per business rules.",
+            "fix": "SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue"
+          },
+          {
+            "severity": "High",
+            "category": "Performance",
+            "title": "Inefficient Correlated Subquery",
+            "line": "(SELECT COUNT(*) FROM FACT_TRANSACTIONS t2 WHERE t2.CUSTOMER_ID = ft.CUSTOMER_ID) as customer_txns",
+            "problem": "The correlated subquery can be very inefficient as it runs for each row in the outer query.",
+            "fix": "COUNT(*) OVER (PARTITION BY ft.CUSTOMER_ID) as customer_txns"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Lack of Comments",
+            "line": "Entire Query",
+            "problem": "The query lacks comments explaining the logic, especially around the revenue calculation and customer transaction count.",
+            "fix": "Add comments explaining the logic of revenue calculation and customer transaction count."
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Inconsistent Naming",
+            "line": "ft.CUSTOMER_ID, ft.MERCHANT_ID",
+            "problem": "The table alias 'ft' is used inconsistently with both uppercase and lowercase.",
+            "fix": "Use consistent casing for table aliases, e.g., 'ft'"
+          }
+        ],
+        "corrected_sql": "-- Customer transaction summary with corrected bugs\nSELECT \n    ft.CUSTOMER_ID,\n    ft.MERCHANT_ID,\n    COUNT(*) as txn_count,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue,\n    COUNT(*) OVER (PARTITION BY ft.CUSTOMER_ID) as customer_txns\nFROM FACT_TRANSACTIONS ft\nLEFT JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.TRANSACTION_DATE >= '2024-01-01'\nGROUP BY ft.CUSTOMER_ID, ft.MERCHANT_ID",
+        "summary": "The query had critical correctness issues with revenue calculation and performance issues with a correlated subquery. Readability was also improved by adding comments and ensuring consistent naming."
+      }
+    },
+    {
+      "file": "queries/payment_failure_analysis.sql",
+      "reviewed_at": "2026-05-25T17:41:20.588130",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Critical",
+            "category": "Correctness",
+            "title": "Incorrect revenue calculation",
+            "line": "line 4",
+            "problem": "The query does not filter transactions by status 'COMPLETED' to calculate revenue.",
+            "fix": "SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as revenue"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Missing alias for table",
+            "line": "line 2",
+            "problem": "The table alias 'ft' is not descriptive enough for better readability.",
+            "fix": "FROM FACT_TRANSACTIONS ft AS transactions"
+          },
+          {
+            "severity": "Medium",
+            "category": "Readability",
+            "title": "Lack of comments",
+            "line": "line 1-5",
+            "problem": "The query lacks comments explaining the logic and purpose.",
+            "fix": "-- Add comments explaining the purpose and logic of the query"
+          }
+        ],
+        "corrected_sql": "-- Payment method failure analysis\nSELECT \n    ft.PAYMENT_METHOD,\n    COUNT(*) as total_transactions,\n    SUM(CASE WHEN ft.STATUS = 'FAILED' THEN 1 ELSE 0 END) as failed_count,\n    ROUND(100.0 * SUM(CASE WHEN ft.STATUS = 'FAILED' THEN 1 ELSE 0 END) / COUNT(*), 2) as failure_rate_pct,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as revenue\nFROM FACT_TRANSACTIONS ft AS transactions\nGROUP BY ft.PAYMENT_METHOD\nORDER BY failure_rate_pct DESC",
+        "summary": "The query has a critical correctness issue with the revenue calculation and some readability issues. The corrected query includes the correct revenue calculation and improved readability."
+      }
+    },
+    {
+      "file": "queries/revenue_by_merchant.sql",
+      "reviewed_at": "2026-05-25T17:41:28.130375",
+      "issues_found": 3,
+      "review": {
+        "issues": [
+          {
+            "severity": "Medium",
+            "category": "Correctness",
+            "title": "Revenue Calculation",
+            "line": "SUM(ft.AMOUNT) as total_revenue",
+            "problem": "The query calculates total revenue but does not filter for 'COMPLETED' status in the SUM function.",
+            "fix": "SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Column Naming",
+            "line": "dm.MERCHANT_NAME, dm.CATEGORY",
+            "problem": "Column names are in uppercase which is less readable and not consistent with SQL naming conventions.",
+            "fix": "dm.merchant_name, dm.category"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Lack of Comments",
+            "line": "Entire Query",
+            "problem": "The query lacks comments explaining the purpose and logic.",
+            "fix": "-- Revenue by merchant\nSELECT \n    dm.merchant_name,\n    dm.category,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue,\n    COUNT(ft.TRANSACTION_ID) as transaction_count\nFROM sigma_analytics.fact_transactions ft\nINNER JOIN sigma_analytics.dim_merchant dm ON ft.merchant_id = dm.merchant_id\nWHERE ft.status = 'COMPLETED'\nGROUP BY dm.merchant_name, dm.category\nORDER BY total_revenue DESC"
+          }
+        ],
+        "corrected_sql": "-- Revenue by merchant\nSELECT \n    dm.merchant_name,\n    dm.category,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue,\n    COUNT(ft.TRANSACTION_ID) as transaction_count\nFROM sigma_analytics.fact_transactions ft\nINNER JOIN sigma_analytics.dim_merchant dm ON ft.merchant_id = dm.merchant_id\nWHERE ft.status = 'COMPLETED'\nGROUP BY dm.merchant_name, dm.category\nORDER BY total_revenue DESC",
+        "summary": "The query calculates revenue correctly but has readability issues and a minor correctness issue in the revenue calculation. The corrected query includes proper case sensitivity and comments for readability."
+      }
+    },
+    {
+      "file": "queries/top_transactions.sql",
+      "reviewed_at": "2026-05-25T17:41:33.589678",
+      "issues_found": 2,
+      "review": {
+        "issues": [
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Column alias casing",
+            "line": "SELECT clause",
+            "problem": "Column aliases should be consistently cased for readability.",
+            "fix": "SELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS"
+          },
+          {
+            "severity": "Low",
+            "category": "Readability",
+            "title": "Lack of comments",
+            "line": "Entire query",
+            "problem": "The query lacks comments explaining its purpose and logic.",
+            "fix": "-- Top transactions by amount\nSELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS\nFROM FACT_TRANSACTIONS ft\nINNER JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.STATUS = 'COMPLETED'\nORDER BY ft.AMOUNT DESC\nLIMIT 100"
+          }
+        ],
+        "corrected_sql": "-- Top transactions by amount\nSELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS\nFROM FACT_TRANSACTIONS ft\nINNER JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.STATUS = 'COMPLETED'\nORDER BY ft.AMOUNT DESC\nLIMIT 100",
+        "summary": "The query is mostly correct but has minor readability issues with casing and lack of comments."
+      }
+    }
+  ]
+}

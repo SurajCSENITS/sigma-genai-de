@@ -1,0 +1,35 @@
+{
+  "file": "queries/payment_failure_analysis.sql",
+  "reviewed_at": "2026-05-25T17:41:20.588130",
+  "issues_found": 3,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Incorrect revenue calculation",
+        "line": "line 4",
+        "problem": "The query does not filter transactions by status 'COMPLETED' to calculate revenue.",
+        "fix": "SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as revenue"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Missing alias for table",
+        "line": "line 2",
+        "problem": "The table alias 'ft' is not descriptive enough for better readability.",
+        "fix": "FROM FACT_TRANSACTIONS ft AS transactions"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Lack of comments",
+        "line": "line 1-5",
+        "problem": "The query lacks comments explaining the logic and purpose.",
+        "fix": "-- Add comments explaining the purpose and logic of the query"
+      }
+    ],
+    "corrected_sql": "-- Payment method failure analysis\nSELECT \n    ft.PAYMENT_METHOD,\n    COUNT(*) as total_transactions,\n    SUM(CASE WHEN ft.STATUS = 'FAILED' THEN 1 ELSE 0 END) as failed_count,\n    ROUND(100.0 * SUM(CASE WHEN ft.STATUS = 'FAILED' THEN 1 ELSE 0 END) / COUNT(*), 2) as failure_rate_pct,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as revenue\nFROM FACT_TRANSACTIONS ft AS transactions\nGROUP BY ft.PAYMENT_METHOD\nORDER BY failure_rate_pct DESC",
+    "summary": "The query has a critical correctness issue with the revenue calculation and some readability issues. The corrected query includes the correct revenue calculation and improved readability."
+  }
+}

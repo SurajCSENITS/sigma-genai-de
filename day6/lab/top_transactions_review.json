@@ -1,0 +1,27 @@
+{
+  "file": "queries/top_transactions.sql",
+  "reviewed_at": "2026-05-25T17:41:33.589678",
+  "issues_found": 2,
+  "review": {
+    "issues": [
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Column alias casing",
+        "line": "SELECT clause",
+        "problem": "Column aliases should be consistently cased for readability.",
+        "fix": "SELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS"
+      },
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Lack of comments",
+        "line": "Entire query",
+        "problem": "The query lacks comments explaining its purpose and logic.",
+        "fix": "-- Top transactions by amount\nSELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS\nFROM FACT_TRANSACTIONS ft\nINNER JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.STATUS = 'COMPLETED'\nORDER BY ft.AMOUNT DESC\nLIMIT 100"
+      }
+    ],
+    "corrected_sql": "-- Top transactions by amount\nSELECT ft.TRANSACTION_ID, ft.CUSTOMER_ID, dm.MERCHANT_NAME, ft.AMOUNT, ft.TRANSACTION_DATE, ft.STATUS\nFROM FACT_TRANSACTIONS ft\nINNER JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.STATUS = 'COMPLETED'\nORDER BY ft.AMOUNT DESC\nLIMIT 100",
+    "summary": "The query is mostly correct but has minor readability issues with casing and lack of comments."
+  }
+}

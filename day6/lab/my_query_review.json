@@ -1,0 +1,43 @@
+{
+  "file": "queries/my_query.sql",
+  "reviewed_at": "2026-05-25T17:41:14.260413",
+  "issues_found": 4,
+  "review": {
+    "issues": [
+      {
+        "severity": "Critical",
+        "category": "Correctness",
+        "title": "Revenue Calculation Error",
+        "line": "SUM(ft.AMOUNT) as total_revenue",
+        "problem": "The revenue calculation does not filter by status 'COMPLETED' as per business rules.",
+        "fix": "SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue"
+      },
+      {
+        "severity": "High",
+        "category": "Performance",
+        "title": "Inefficient Correlated Subquery",
+        "line": "(SELECT COUNT(*) FROM FACT_TRANSACTIONS t2 WHERE t2.CUSTOMER_ID = ft.CUSTOMER_ID) as customer_txns",
+        "problem": "The correlated subquery can be very inefficient as it runs for each row in the outer query.",
+        "fix": "COUNT(*) OVER (PARTITION BY ft.CUSTOMER_ID) as customer_txns"
+      },
+      {
+        "severity": "Medium",
+        "category": "Readability",
+        "title": "Lack of Comments",
+        "line": "Entire Query",
+        "problem": "The query lacks comments explaining the logic, especially around the revenue calculation and customer transaction count.",
+        "fix": "Add comments explaining the logic of revenue calculation and customer transaction count."
+      },
+      {
+        "severity": "Low",
+        "category": "Readability",
+        "title": "Inconsistent Naming",
+        "line": "ft.CUSTOMER_ID, ft.MERCHANT_ID",
+        "problem": "The table alias 'ft' is used inconsistently with both uppercase and lowercase.",
+        "fix": "Use consistent casing for table aliases, e.g., 'ft'"
+      }
+    ],
+    "corrected_sql": "-- Customer transaction summary with corrected bugs\nSELECT \n    ft.CUSTOMER_ID,\n    ft.MERCHANT_ID,\n    COUNT(*) as txn_count,\n    SUM(CASE WHEN ft.STATUS = 'COMPLETED' THEN ft.AMOUNT ELSE 0 END) as total_revenue,\n    COUNT(*) OVER (PARTITION BY ft.CUSTOMER_ID) as customer_txns\nFROM FACT_TRANSACTIONS ft\nLEFT JOIN DIM_MERCHANT dm ON ft.MERCHANT_ID = dm.MERCHANT_ID\nWHERE ft.TRANSACTION_DATE >= '2024-01-01'\nGROUP BY ft.CUSTOMER_ID, ft.MERCHANT_ID",
+    "summary": "The query had critical correctness issues with revenue calculation and performance issues with a correlated subquery. Readability was also improved by adding comments and ensuring consistent naming."
+  }
+}
