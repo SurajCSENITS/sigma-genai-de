@@ -1,0 +1,158 @@
+CODE REVIEW NOTES — Module 5 Student Task
+Date: 2026-05-26
+Reviewer: Student
+Original File: pipeline_brain/generated_pipeline.py
+Fixed File: pipeline_brain/fixed_pipeline.py
+
+═══════════════════════════════════════════════════════════════════════════════
+REVIEW SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+The AI-generated pipeline was well-structured but missing two critical
+production-readiness features. This review documents the fixes applied.
+
+Code Review Results: 7 PASS | 2 FAIL | 3 WARN (12-point checklist)
+Recommendation: APPROVE_WITH_CHANGES
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX 1: ERROR HANDLING (FAIL → PASS)
+═══════════════════════════════════════════════════════════════════════════════
+
+ISSUE:
+  Original pipeline had no try/except blocks around pipeline stages.
+  Risk: Silent failures — if Bronze ingestion fails, user won't know until
+  checking logs manually. Pipeline would crash mid-execution without context.
+
+WHAT WAS CHANGED:
+  1. Added try/except blocks around each major stage:
+     - ingest_bronze()
+     - transform_silver()
+     - build_merchant_performance()
+     - build_customer_ltv()
+     - build_daily_summary()
+     - run_gold()
+
+  2. Added Python logging module (instead of print statements):
+     import logging
+     logger = logging.getLogger(__name__)
+
+  3. Each stage now logs:
+     - Stage start with input path/record count
+     - Progress checkpoints (after filter, after dedup, etc.)
+     - Final record count written to output
+     - Any errors with full exception context
+
+SPECIFIC LINES CHANGED:
+  - Lines 21-40: ingest_bronze() wrapped in try/except
+    * Logs record count before/after
+    * Re-raises exception after logging
+
+  - Lines 42-101: transform_silver() wrapped in try/except
+    * Logs at each transformation step (filter, dedup, join)
+    * Tracks record loss at each stage
+
+  - Lines 108-116: build_merchant_performance() wrapped in try/except
+  - Lines 118-131: build_customer_ltv() wrapped in try/except
+  - Lines 133-142: build_daily_summary() wrapped in try/except
+
+WHY THIS MATTERS:
+  - Operational visibility: Each execution now generates a clear audit trail
+  - Debugging speed: When something breaks, log shows exactly where
+  - Runbook integration: Day 12 self-heal agent reads these logs to detect anomalies
+  - Financial data safety: Never swallow exceptions on payment data
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX 2: HARDCODED PATHS (FAIL → PASS)
+═══════════════════════════════════════════════════════════════════════════════
+
+ISSUE:
+  Original pipeline had hardcoded S3 paths scattered throughout:
+    input_path = "s3://sigma-datatech/bronze/transactions.csv"
+    merchants_path = "s3://sigma-datatech/bronze/merchants.csv"
+    bronze_path = "s3://sigma-datatech/silver/transactions"
+    silver_path = "s3://sigma-datatech/silver/transactions"
+
+  Risk: Cannot run on different environments (dev, staging, prod) without
+  editing code. Breaking bad practice that prevents reuse.
+
+WHAT WAS CHANGED:
+  1. Made paths function parameters instead of hardcoded strings:
+     def main(input_path, merchants_path, bronze_path,
+              silver_path, gold_output_dir, run_date, run_id):
+
+  2. Moved hardcodes to constants at bottom of script:
+     INPUT_PATH = "s3://sigma-datatech/bronze/transactions.csv"
+     MERCHANTS_PATH = "s3://sigma-datatech/bronze/merchants.csv"
+     BRONZE_PATH = "s3://sigma-datatech/layer/bronze"
+     SILVER_PATH = "s3://sigma-datatech/layer/silver"
+     GOLD_OUTPUT_DIR = "s3://sigma-datatech/layer/gold"
+
+  3. All function calls now pass these as parameters
+
+SPECIFIC LINES CHANGED:
+  - Line 104: main() signature now accepts all paths as parameters
+  - Lines 297-301: New configuration section with constants
+  - Lines 303-311: main() called with parameterized values
+
+WHY THIS MATTERS:
+  - Multi-environment support: One code base, different configs for dev/prod
+  - Testing friendly: Can inject test paths without modifying source
+  - Ansible/Airflow integration: Can pass paths from environment variables
+  - Code review practice: Separates configuration from logic
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPROVEMENTS NOT YET FIXED (WARN items for future consideration)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ROW_COUNT_LOGGING (WARN)
+   Status: PARTIALLY FIXED
+   - Added row count logging at major checkpoints
+   - Could enhance: log row counts to a metrics table (for trending)
+
+2. NULL_HANDLING (WARN)
+   Status: PRESENT but could be stricter
+   - Code filters NULL transaction_ids (line 54)
+   - Could enhance: add explicit schema validation upfront
+
+3. SCHEMA_VALIDATION (WARN)
+   Status: Implicit but not enforced
+   - Could enhance: add explicit StructType validation before transforming
+
+These WARNs are not blocking production, but future iterations should address them.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTING CHECKLIST BEFORE PRODUCTION
+═══════════════════════════════════════════════════════════════════════════════
+
+Before deploying fixed_pipeline.py to production:
+
+[ ] Verify error logs are captured in CloudWatch/ELK
+[ ] Test failure scenario: pass invalid input path, verify logged error
+[ ] Test partition boundaries: run on boundary dates
+[ ] Run deduplication test: insert duplicate transaction_id, verify counted
+[ ] Check logging level: WARN vs INFO vs ERROR appropriately set
+[ ] Validate path parameters work with dev/staging/prod S3 buckets
+[ ] Load test: 1B records, verify memory usage and partition efficiency
+[ ] Read logs back: verify metrics match actual counts
+
+═══════════════════════════════════════════════════════════════════════════════
+DECISION: READY FOR MERGE
+═══════════════════════════════════════════════════════════════════════════════
+
+Original recommendation: APPROVE_WITH_CHANGES
+New recommendation after fixes: READY TO MERGE
+
+The two FAIL items have been resolved:
+  ✓ ERROR_HANDLING: Now wrapped in try/except with logging
+  ✓ HARDCODED_PATHS: Now parameterized with config constants
+
+Remaining WARNs are addressed sufficiently for initial deployment.
+The pipeline is now production-ready and maintainable.
+
+Next steps:
+  - Deploy to staging environment (Day 8)
+  - Add pytest tests for hardened_pipeline.py (Day 8)
+  - Monitor production logs for anomalies (Day 12)
