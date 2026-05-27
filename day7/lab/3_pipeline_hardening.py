@@ -166,14 +166,14 @@ Add ALL FIVE of these improvements:
 
 4. ROW COUNT LOGGING AT EACH STAGE
    - After each major transformation, call df.count() and log the result
-   - Log format: "[Stage: {{stage_name}}] {{label}}: {{count:,}} rows"
+   - Log format: "[Stage: {stage_name}] {label}: {count:,} rows"
    - Track these counts: input_count, after_filter_count, after_dedup_count, output_count
 
 5. RUN METADATA JSON
    - At the end of the pipeline, collect all row counts into a dict
    - Add: pipeline_name, run_date, run_id, run_status ('SUCCESS' or 'FAILED'), error_message
    - Add: started_at, completed_at (ISO format timestamps)
-   - Save to run_metadata_{{{{run_date}}}}.json in the output directory
+   - Save to run_metadata_{{run_date}}.json in the output directory
    - This file is read by the Day 12 self-heal agent to detect anomalies
 
 Return the COMPLETE hardened file with all 5 improvements added."""
