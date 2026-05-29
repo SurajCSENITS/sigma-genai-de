@@ -303,6 +303,9 @@ def heal(pipeline_code: str, memory: HealingMemory) -> dict:
             icon = "✅" if h["success"] else "❌"
             print(f"  {icon} {h['at'][:16]} — {h['error']}")
 
+    last_failed_error = ""   # full error string from the previous failed attempt
+    last_failed_code  = ""   # code that produced that error
+
     for attempt in range(1, MAX_HEAL_ATTEMPTS + 1):
         print(f"\n{'─'*60}")
         print(f"ATTEMPT {attempt}/{MAX_HEAL_ATTEMPTS} — Running pipeline...")
@@ -317,11 +320,11 @@ def heal(pipeline_code: str, memory: HealingMemory) -> dict:
                 "status": "success",
                 "output": output,
             })
-            # Save successful code to memory
+            # Save successful fix — keyed on the FULL error from the previous failed run
             if attempt > 1:
                 memory.save(
-                    error=healing_log[-2].get("error", ""),
-                    broken_code=healing_log[-2].get("code_tried", ""),
+                    error=last_failed_error,
+                    broken_code=last_failed_code,
                     fixed_code=current_code,
                     rationale=healing_log[-2].get("rationale", ""),
                     success=True,
@@ -330,6 +333,10 @@ def heal(pipeline_code: str, memory: HealingMemory) -> dict:
 
         # ── Pipeline failed ───────────────────────────────────────────────────
         print(f"❌ Failed. Error:\n   {output[:300]}")
+
+        # Track full error for the success-save fingerprint (must not be truncated)
+        last_failed_error = output
+        last_failed_code  = current_code
 
         # Check memory for a known fix
         cached = memory.lookup(output)
