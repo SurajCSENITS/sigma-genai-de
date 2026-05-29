@@ -1,0 +1,44 @@
+{
+  "module": "Team 4 - CFO Challenger",
+  "generated_at": "2026-05-28T11:43:40Z",
+  "trust_score_pct": 58,
+  "claims": [
+    {
+      "id": "gold_total",
+      "claim": "Gold recognized INR 13,161.00 revenue across 14 transactions, or INR 940.07 per transaction.",
+      "status": "VERIFIED",
+      "query": "select\n    round(sum(total_revenue), 2) as gold_revenue,\n    sum(total_txns) as gold_txns,\n    sum(unique_customers) as customer_day_count,\n    round(sum(total_revenue) / nullif(sum(total_txns), 0), 2) as revenue_per_txn,\n    round(sum(total_txns * failure_rate_pct / 100) / nullif(sum(total_txns), 0) * 100, 2) as failure_rate_pct\nfrom gold_daily_summary",
+      "verdict": "The aggregate is correct for the Gold layer. The calculation matches the daily summary totals."
+    },
+    {
+      "id": "flipkart_growth",
+      "claim": "Flipkart shows strong momentum because revenue grew 134.48% from 2024-01-19 to 2024-01-25.",
+      "status": "MISLEADING",
+      "query": "select\n    merchant_name,\n    transaction_date,\n    count(*) as txn_count,\n    round(sum(case when status = 'COMPLETED' then amount else 0 end), 2) as completed_revenue\nfrom silver_transactions\nwhere merchant_name = 'Flipkart'\ngroup by merchant_name, transaction_date\norder by transaction_date",
+      "verdict": "The percentage growth is mathematically correct, but it is based on only two completed transactions on two isolated days. That is not enough evidence for a trend."
+    },
+    {
+      "id": "zero_value_quality",
+      "claim": "Gold has no zero-value completed transactions, so recognized revenue is clean.",
+      "status": "WRONG",
+      "query": "select\n    transaction_id,\n    amount,\n    status,\n    merchant_id,\n    customer_id,\n    transaction_date,\n    payment_method\nfrom bronze_transactions\nwhere status = 'COMPLETED'\n  and amount = 0\norder by transaction_date",
+      "verdict": "Gold/Silver hide the issue, but Bronze contains TXN019: a completed transaction for INR 0.00. It is invisible in revenue totals, yet it violates the business definition of a valid completed order."
+    }
+  ],
+  "what_ai_got_wrong": {
+    "claim": "Flipkart shows strong momentum because revenue grew 134.48% from 2024-01-19 to 2024-01-25.",
+    "why_it_is_misleading": "The math is right, but two isolated completed transactions are not a statistically reliable trend.",
+    "additional_data_needed": [
+      "More daily revenue observations",
+      "Order counts by day",
+      "Average order value distribution",
+      "Refund and cancellation rates",
+      "Campaign or customer concentration context"
+    ]
+  },
+  "bronze_quality_trap": {
+    "transaction_id": "TXN019",
+    "issue": "Completed transaction with zero amount is present in Bronze but absent from Gold/Silver revenue reporting.",
+    "business_risk": "Aggregate revenue can look clean while an invalid completed order slips past the CEO briefing."
+  }
+}
