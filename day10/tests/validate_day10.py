@@ -15,14 +15,11 @@ if sys.platform == "win32":
 
 LAB_DIR = os.path.join(os.path.dirname(__file__), "..", "lab")
 DUCKDB_PATH = os.path.join(LAB_DIR, "sigma_platform.duckdb")
-<<<<<<< HEAD
 os.environ.setdefault(
     "CREWAI_STORAGE_DIR",
     os.path.join(LAB_DIR, "agent_outputs", "crewai_storage"),
 )
-=======
 OUTPUT_DIR = os.path.join(LAB_DIR, "agent_outputs")
->>>>>>> b73cfe915b9828c3a3bec23e6103fdc53df6266b
 
 PASS = "\033[92mPASS\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
@@ -91,16 +88,10 @@ packages = {
 for import_name, pip_name in packages.items():
     try:
         __import__(import_name)
-<<<<<<< HEAD
-        check(f"Package: {pip_name}", True)
+        preflight_check(f"Package: {pip_name}", True)
     except Exception as e:
         detail = f"run: pip install {pip_name}" if isinstance(e, ImportError) else str(e)[:80]
-        check(f"Package: {pip_name}", False, detail)
-=======
-        preflight_check(f"Package: {pip_name}", True)
-    except ImportError:
-        preflight_check(f"Package: {pip_name}", False, f"run: pip install {pip_name}")
->>>>>>> b73cfe915b9828c3a3bec23e6103fdc53df6266b
+        preflight_check(f"Package: {pip_name}", False, detail)
 
 # 3. AWS credentials
 try:
