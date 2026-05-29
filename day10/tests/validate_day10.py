@@ -8,6 +8,10 @@ import sys, os, json, subprocess
 
 LAB_DIR = os.path.join(os.path.dirname(__file__), "..", "lab")
 DUCKDB_PATH = os.path.join(LAB_DIR, "sigma_platform.duckdb")
+os.environ.setdefault(
+    "CREWAI_STORAGE_DIR",
+    os.path.join(LAB_DIR, "agent_outputs", "crewai_storage"),
+)
 
 PASS = "  ✅"
 FAIL = "  ❌"
@@ -45,8 +49,9 @@ for import_name, pip_name in packages.items():
     try:
         __import__(import_name)
         check(f"Package: {pip_name}", True)
-    except ImportError:
-        check(f"Package: {pip_name}", False, f"run: pip install {pip_name}")
+    except Exception as e:
+        detail = f"run: pip install {pip_name}" if isinstance(e, ImportError) else str(e)[:80]
+        check(f"Package: {pip_name}", False, detail)
 
 # ── AWS credentials ───────────────────────────────────────────────────────────
 try:

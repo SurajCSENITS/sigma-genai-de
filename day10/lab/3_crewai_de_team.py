@@ -46,6 +46,13 @@ from datetime import datetime
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+# Keep CrewAI's local storage inside this lab folder instead of macOS
+# Application Support, which can be blocked in managed/sandboxed environments.
+os.environ.setdefault(
+    "CREWAI_STORAGE_DIR",
+    os.path.join(os.path.dirname(__file__), "agent_outputs", "crewai_storage"),
+)
+
 try:
     from crewai import Agent, Task, Crew, Process, LLM
 except ImportError:

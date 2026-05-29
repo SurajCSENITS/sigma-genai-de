@@ -9,13 +9,16 @@
 # 1. Go to the lab folder
 cd repo/day10
 
-# 2. Run the preflight check — fix any ❌ before starting
+# 2. Activate the repo Python 3.12 environment
+source ../venv/bin/activate
+
+# 3. Run the preflight check — fix any ❌ before starting
 python tests/validate_day10.py
 
-# 3. Install dependencies
+# 4. Install dependencies
 pip install -r lab/requirements.txt
 
-# 4. Move into the lab directory for all labs
+# 5. Move into the lab directory for all labs
 cd lab/
 ```
 

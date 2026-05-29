@@ -169,7 +169,7 @@ DB_PATH = r"<<<DB_PATH>>>"  # injected at runtime — safe across temp file exec
 '''.replace("<<<DB_PATH>>>", DB_PATH) + '''\
 
 def run_merchant_report():
-    conn = duckdb.connect(DB_PATH)
+    conn = duckdb.connect(DB_PATH, read_only=True)
     df = conn.execute("SELECT * FROM silver_transactions WHERE amount > 0").fetchdf()
 
     # Bug 1: wrong column name — "amounts" does not exist, should be "amount"

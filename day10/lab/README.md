@@ -4,6 +4,7 @@
 
 ```bash
 cd repo/day10
+source ../venv/bin/activate
 python tests/validate_day10.py    # must show all ✅ before starting
 pip install -r lab/requirements.txt
 ```
