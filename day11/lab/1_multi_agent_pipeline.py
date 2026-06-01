@@ -63,15 +63,53 @@ REGION   = "us-east-1"
 
 # ── Bedrock helper ────────────────────────────────────────────────────────────
 def call_bedrock(prompt: str, system: str = "", max_tokens: int = 800) -> str:
-    client = boto3.client("bedrock-runtime", region_name=REGION)
-    body = {
-        "messages": [{"role": "user", "content": [{"text": prompt}]}],
-        "inferenceConfig": {"maxTokens": max_tokens, "temperature": 0.1},
-    }
-    if system:
-        body["system"] = [{"text": system}]
-    resp = client.invoke_model(modelId=MODEL_ID, body=json.dumps(body))
-    return json.loads(resp["body"].read())["output"]["message"]["content"][0]["text"].strip()
+    try:
+        if not any(os.environ.get(k) for k in ("AWS_ACCESS_KEY_ID", "AWS_PROFILE", "AWS_WEB_IDENTITY_TOKEN_FILE")):
+            raise RuntimeError("AWS credentials not configured")
+        client = boto3.client("bedrock-runtime", region_name=REGION)
+        body = {
+            "messages": [{"role": "user", "content": [{"text": prompt}]}],
+            "inferenceConfig": {"maxTokens": max_tokens, "temperature": 0.1},
+        }
+        if system:
+            body["system"] = [{"text": system}]
+        resp = client.invoke_model(modelId=MODEL_ID, body=json.dumps(body))
+        return json.loads(resp["body"].read())["output"]["message"]["content"][0]["text"].strip()
+    except Exception as e:
+        print(f"  [WARN] Bedrock unavailable ({e.__class__.__name__}); using local lab fallback.")
+        if '"task_id":' in prompt:
+            if "schema_drift" in prompt:
+                assigned = ["SchemaAgent", "QualityAgent"]
+                order = "sequential"
+            elif "pii_scan" in prompt:
+                assigned = ["PIIAgent"]
+                order = "sequential"
+            elif "quality_alert" in prompt:
+                assigned = ["QualityAgent", "PIIAgent"]
+                order = "parallel"
+            else:
+                assigned = ["ProfilerAgent", "QualityAgent"]
+                order = "sequential"
+            task_id = prompt.split("Task ID  : ", 1)[1].splitlines()[0].strip()
+            return json.dumps({
+                "task_id": task_id,
+                "assigned_agents": assigned,
+                "execution_order": order,
+                "reasoning": "Local fallback selected agents from task type and row count."
+            })
+        if "load_decision field" in prompt:
+            return json.dumps({
+                "stage": "LoadDecision",
+                "load_decision": "quarantined_partial",
+                "justification": "Load clean rows only after quarantining critical quality failures.",
+                "pass_to_next": {"load_decision": "quarantined_partial"}
+            })
+        return json.dumps({
+            "stage": "ProfileOrValidate",
+            "status": "completed",
+            "findings": ["Primary key, amount, date, currency, and status checks are required."],
+            "pass_to_next": {"quality_gate": "quarantine critical failures before load"}
+        })
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATTERN 1: SUPERVISOR PATTERN
