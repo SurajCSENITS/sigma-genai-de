@@ -1,0 +1,68 @@
+{
+  "pattern": "sequential_pipeline",
+  "timestamp": "2026-06-01T11:57:43.692819",
+  "input_file": {
+    "filename": "transactions_raw.csv",
+    "row_count": 500,
+    "columns": [
+      "transaction_id",
+      "merchant_name",
+      "category",
+      "amount",
+      "currency",
+      "transaction_date",
+      "status",
+      "customer_id",
+      "payment_method",
+      "merchant_city"
+    ],
+    "sample_issues": [
+      "4 blank transaction_ids",
+      "7 null amounts",
+      "3 negative amounts",
+      "2 invalid dates",
+      "1 unknown currency"
+    ]
+  },
+  "stages": [
+    {
+      "stage": "ProfileOrValidate",
+      "status": "completed",
+      "findings": [
+        "Primary key, amount, date, currency, and status checks are required."
+      ],
+      "pass_to_next": {
+        "quality_gate": "quarantine critical failures before load"
+      },
+      "_stage": "Profile",
+      "_agent": "Profiler Agent",
+      "_timestamp": "2026-06-01T11:57:28.191116"
+    },
+    {
+      "stage": "ProfileOrValidate",
+      "status": "completed",
+      "findings": [
+        "Primary key, amount, date, currency, and status checks are required."
+      ],
+      "pass_to_next": {
+        "quality_gate": "quarantine critical failures before load"
+      },
+      "_stage": "Validate",
+      "_agent": "Quality Agent",
+      "_timestamp": "2026-06-01T11:57:32.729659"
+    },
+    {
+      "stage": "LoadDecision",
+      "load_decision": "quarantined_partial",
+      "justification": "Load clean rows only after quarantining critical quality failures.",
+      "pass_to_next": {
+        "load_decision": "quarantined_partial"
+      },
+      "_stage": "LoadDecision",
+      "_agent": "Loader Agent",
+      "_timestamp": "2026-06-01T11:57:43.691920"
+    }
+  ],
+  "final_decision": "quarantined_partial",
+  "student_judgment": "Parallel steps can publish incomplete downstream decisions if the slow quality result later rejects rows the faster PII path already approved."
+}

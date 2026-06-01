@@ -1,0 +1,63 @@
+{
+  "agent": "PIISensitivityAgent",
+  "run_timestamp": "2026-06-01T11:59:05.489791",
+  "input_file": "customers_raw.csv",
+  "dataset_classification": "Restricted",
+  "load_restriction": "BLOCK load until PII masked \u2014 compliance sign-off required",
+  "masking_plan": [
+    {
+      "column": "full_name",
+      "pii_type": "full_name",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "masking_strategy": "Pseudonymisation \u2014 replace with consistent fake name per customer_id",
+      "detect_method": "regex"
+    },
+    {
+      "column": "email_address",
+      "pii_type": "email_address",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "masking_strategy": "Domain-preserve masking: user part \u2192 hash@domain.com",
+      "detect_method": "regex"
+    },
+    {
+      "column": "phone_number",
+      "pii_type": "phone_number",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "masking_strategy": "Partial masking: show last 4 digits only (+91 XXXXXX1234)",
+      "detect_method": "regex"
+    },
+    {
+      "column": "pan_number",
+      "pii_type": "pan_number",
+      "sensitivity": "Restricted",
+      "confidence": "high",
+      "masking_strategy": "Format-preserving tokenisation (PAN structure preserved, value replaced)",
+      "detect_method": "regex"
+    },
+    {
+      "column": "account_number",
+      "pii_type": "account_number",
+      "sensitivity": "Restricted",
+      "confidence": "high",
+      "masking_strategy": "Tokenisation with vault \u2014 store token, retrieve on audit",
+      "detect_method": "regex"
+    },
+    {
+      "column": "customer_id",
+      "pii_type": "customer_identifier",
+      "sensitivity": "Confidential",
+      "confidence": "llm",
+      "masking_strategy": "Hash or tokenize outside trusted analytics zones.",
+      "detect_method": "llm"
+    }
+  ],
+  "compliance_notes": [
+    "PAN numbers: RBI circular 2023-09 requires format-preserving tokenisation",
+    "Aadhaar: UIDAI mandate \u2014 only last 4 digits may be stored",
+    "All Restricted data requires DLP tool scan before prod load"
+  ],
+  "student_judgment": "Yes for unknown or high-risk partner feeds; use regex first and reserve LLM scans for ambiguous columns to balance cost against the risk of unmasked PII entering storage."
+}

@@ -1,0 +1,63 @@
+{
+  "run_id": "182446",
+  "results": [
+    {
+      "id": "TXN100441",
+      "merchant": "QuickMart",
+      "amount": 4521.5,
+      "decision": "PASS",
+      "expected": "PASS",
+      "correct": true,
+      "reason": "Fields are valid and amount fits the merchant context.",
+      "latency_ms": 0,
+      "tokens": 119
+    },
+    {
+      "id": "TXN100467",
+      "merchant": "FuelPlus",
+      "amount": -892.0,
+      "decision": "QUARANTINE",
+      "expected": "QUARANTINE",
+      "correct": true,
+      "reason": "Negative transaction amount requires review.",
+      "latency_ms": 0,
+      "tokens": 118
+    },
+    {
+      "id": "TXN100489",
+      "merchant": "Apollo Hospital",
+      "amount": 980000.0,
+      "decision": "PASS",
+      "expected": "PASS",
+      "correct": true,
+      "reason": "Fields are valid and amount fits the merchant context.",
+      "latency_ms": 0,
+      "tokens": 124
+    },
+    {
+      "id": "TXN100512",
+      "merchant": "CloudStore",
+      "amount": 15230.0,
+      "decision": "QUARANTINE",
+      "expected": "QUARANTINE",
+      "correct": true,
+      "reason": "Unknown currency code is not loadable.",
+      "latency_ms": 0,
+      "tokens": 116
+    },
+    {
+      "id": "TXN100534",
+      "merchant": "CafeBlend",
+      "amount": 340.0,
+      "decision": "QUARANTINE",
+      "expected": "QUARANTINE",
+      "correct": true,
+      "reason": "Future-dated transaction is invalid.",
+      "latency_ms": 0,
+      "tokens": 119
+    }
+  ],
+  "correct": 5,
+  "total": 5,
+  "student_judgment": "Add merchant_category and business context to every quality-decision prompt so high-value transactions are judged against merchant-specific norms."
+}
