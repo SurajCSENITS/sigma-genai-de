@@ -12,7 +12,7 @@ You have received a dbt project from an unknown company.
 No company name. No industry label. No documentation.
 Just SQL — and column names.
 
-Your job:
+Your job: 
 1. Figure out what this company does
 2. Govern their data
 3. Defend your governance decisions — without a laptop
